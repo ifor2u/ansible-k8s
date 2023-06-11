@@ -1,0 +1,9 @@
+---
+- ansible.builtin.pip: name=pycdlib
+- ansible.builtin.template: src=ks.cfg.j2 dest=ks.cfg
+  delegate_to: localhost
+- name: "iso_create"
+  community.general.iso_create: src_files=ks.cfg dest_iso=ks.iso interchange_level=3 joliet=3 rock_ridge=1.09 vol_ident=ksconf
+  delegate_to: localhost
+- community.vmware.vsphere_copy: datacenter=Datacenter datastore=datastore10 path=/ks.iso src=ks.iso hostname="{{ vcenter_hostname }}" username="{{ vcenter_username }}" password="{{ vcenter_password }}" validate_certs=no
+  delegate_to: localhost

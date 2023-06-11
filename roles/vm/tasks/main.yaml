@@ -1,0 +1,158 @@
+---
+- name: "poweredoff"
+  community.vmware.vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    name: "{{ vm_name }}"
+    state: poweredoff
+  ignore_errors: yes
+  register: result
+
+- debug: msg={{ result }}
+
+- name: "delete vm"
+  community.vmware.vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    name: "{{ vm_name }}"
+    delete_from_inventory: false
+    state: absent
+  delegate_to: localhost
+    
+- name: "create vm"
+  community.vmware.vmware_guest:
+    name: "{{ vm_name }}"
+    cluster: "Cluster"
+    datacenter: "Datacenter"
+    state: "poweredoff"
+    guest_id: "rhel8_64Guest"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datastore: "{{ datastore }}"
+    folder: "vm"
+    hardware:
+      num_cpus: 2
+      memory_mb: 4096
+      boot_firmware: efi
+    networks:
+      - name: "{{ vm_network_pg }}"
+    disk:
+      - size_gb: 100
+        type: thin
+        datastore: "{{ datastore }}"
+  delegate_to: localhost
+
+- name: "attach cdrom"
+  community.vmware.vmware_guest:
+    name: "{{ vm_name }}"
+    cluster: "Cluster"
+    datacenter: "Datacenter"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    cdrom:
+      - type: iso
+        controller_number: 0
+        unit_number: 0
+        iso_path: "[{{ datastore }}] ks.iso"
+      - type: iso
+        controller_number: 0
+        unit_number: 1
+        iso_path: "[{{ datastore }}] {{ iso_path }}"
+
+- name: "poweredon"
+  community.vmware.vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    name: "{{ vm_name }}"
+    state: poweredon
+
+- ansible.builtin.wait_for: timeout=2
+
+- community.vmware.vmware_guest_sendkey:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    name: "{{ vm_name }}"
+    keys_send:
+      - "ESC"
+  delegate_to: localhost
+
+- community.vmware.vmware_guest_sendkey:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    name: "{{ vm_name }}"
+    keys_send:
+      - "c"
+  delegate_to: localhost
+
+- ansible.builtin.wait_for: timeout=2
+
+- community.vmware.vmware_guest_sendkey:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    name: "{{ vm_name }}"
+    string_send: "{{ linuxefi }}"
+  delegate_to: localhost
+
+- community.vmware.vmware_guest_sendkey:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    name: "{{ vm_name }}"
+    keys_send:
+      - "ENTER"
+  delegate_to: localhost
+
+- community.vmware.vmware_guest_sendkey:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    name: "{{ vm_name }}"
+    string_send: "initrdefi /images/pxeboot/initrd.img"
+  delegate_to: localhost
+
+- community.vmware.vmware_guest_sendkey:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    name: "{{ vm_name }}"
+    keys_send:
+      - "ENTER"
+  delegate_to: localhost
+
+- community.vmware.vmware_guest_sendkey:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    name: "{{ vm_name }}"
+    string_send: "boot"
+  delegate_to: localhost
+
+- community.vmware.vmware_guest_sendkey:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    name: "{{ vm_name }}"
+    keys_send:
+      - "ENTER"
+  delegate_to: localhost

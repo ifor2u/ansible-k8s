@@ -1,0 +1,5 @@
+---
+- hosts: yum
+  gather_facts: no
+  roles:
+    - roles/yum
