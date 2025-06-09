@@ -1,6 +1,0 @@
----
-- hosts: k8s
-  gather_facts: no
-  roles:
-    - roles/sysctl
-    - roles/os
